@@ -1,11 +1,27 @@
 import { Order, Review } from '../models/models.js'
 
 const userHasPlacedOrderInRestaurant = async (req, res, next) => {
-  res.status(500).send('To be implemented')
+  const { restaurantId } = req.params
+  const userId = req.user.id
+  const ordersCount = await Order.count({ userId, restaurantId })
+  if (ordersCount === 0) {
+    return res.status(403).json({ message: 'You must place an order in the restaurant before reviewing.' })
+  }
+  next()
 }
 
 const checkCustomerHasNotReviewed = async (req, res, next) => {
-  res.status(500).send('To be implemented')
+  try {
+    const { restaurantId } = req.params
+    const customerId = req.user.id
+    const reviewExists = await Review.findOne({ where: { restaurantId, customerId } })
+    if (reviewExists) {
+      return res.status(403).json({ message: 'You have already reviewed this restaurant.' })
+    }
+    next()
+  } catch (err) {
+    return res.status(500).json({ error: 'An error occurred while checking for existing reviews.', err })
+  }
 }
 
 const checkReviewOwnership = async (req, res, next) => {
